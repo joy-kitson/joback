@@ -2,7 +2,7 @@
 #include <unordered_map>
 #include "Graph.cpp"
 #include "FunctGroup.cpp"
-//#include "ReadCSV.cpp"
+#include "ReadCSV.cpp"
 
 int main (int argc, char * argv[]) {
   Graph<FunctGroup> g;
