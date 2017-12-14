@@ -143,6 +143,9 @@ class Graph {
   vector<Node *> get_nodes() {
     return nodes;
   }
+  Node * get_node(int index) {
+    return nodes[index];
+  }
   int get_index(N * datum) {
     int size = nodes.size(); 
     for (int i = 0; i < size; i++) {

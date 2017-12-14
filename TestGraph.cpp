@@ -1,6 +1,5 @@
 #include <iostream>
 #include <unordered_map>
-#include "Graph.cpp"
 //#include "FunctGroup.cpp"
 #include "ReadCSV.cpp"
 
@@ -49,6 +48,7 @@ int main (int argc, char * argv[]) {
     string filename = argv[1];
     auto * table = read_joback(filename);    
     
+    /*
     //print out the table
     for (auto row: *table) {
       cout << "Key:[" << *row.first 
@@ -58,14 +58,30 @@ int main (int argc, char * argv[]) {
              << "] Value[" << contrib.second << "]" << endl;
       }
     }
+    */
 
     //clean up memory
     for (auto row: *table) {
       //cout << *row.first << endl;
-      delete row.first;
+      //delete row.first;
       delete row.second;
     }
     delete table;
+  }
+
+  if (argc > 2) {
+    string filename = argv[2];
+    Graph<FunctGroup> * graph = read_graph(filename);
+   
+    cout << "Initial Graph:" << endl; 
+    cout << graph->to_string();
+    cout << "=========================================" << endl;
+
+    find_cycles(graph);
+
+    cout << "=========================================" << endl
+         << "Final Graph:" << endl;
+    cout << graph->to_string();
   }
 
   //clean up all allocated memory

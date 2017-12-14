@@ -18,6 +18,7 @@ const std::string dA = "dA";
 const std::string dB = "dB";
 const std::string dC = "dC";
 const std::string dD = "dD";
+const std::string Na = "Na";
 std::unordered_map<string, int> HEADERS = {
   {NAME, 0},
   {IN_CYCLE, 1},
@@ -30,7 +31,8 @@ std::unordered_map<string, int> HEADERS = {
   {dA,  8},
   {dB,  9},
   {dC, 10},
-  {dD, 11}
+  {dD, 11},
+  {Na, 12}
 };
 //records the column number in which the values which should 
 //be stored in the contribution table for the row start
@@ -42,13 +44,13 @@ const string EITHER = "EITHER";
 
 //define shorter names for the unordered_maps we'll be using
 typedef unordered_map<std::string, double> RowTable; 
-typedef unordered_map<FunctGroup *, RowTable *> JobackTable; 
+typedef unordered_map<FunctGroup, RowTable *> JobackTable; 
 
 std::vector<std::string> split_by_col(const std::string& str, char delimiter) {
   std::vector<std::string> cols;
   std::string token;
-  std::istringstream tokenStream(str);
-  while (std::getline(tokenStream, token, delimiter)) {
+  std::istringstream token_stream = istringstream(str);
+  while (std::getline(token_stream, token, delimiter)) {
     cols.push_back(token);
   }
   
@@ -72,9 +74,9 @@ JobackTable * read_joback(std::string filename) {
  
   //make sure the file opened properly 
   if (file.is_open()) {
-    cout << "file opened" << endl;
+    //cout << "file opened" << endl;
   } else {
-    cout << "file not opened" << endl;
+    cout << "ERROR: Contributions table not found" << endl;
     return NULL;
   }
   
@@ -115,9 +117,9 @@ JobackTable * read_joback(std::string filename) {
                                           cols[HEADERS[BONDS]]);
 
         //assign values
-        (* joback_table)[fgt] = contributions;  
+        (* joback_table)[*fgt] = contributions;  
         //store a copy of contributions in order to avoid double freeing later
-        (* joback_table)[fgf] = copy_RowTable(contributions);
+        (* joback_table)[*fgf] = copy_RowTable(contributions);
 
         //cout << *fgt << endl;
         //cout << *fgf << endl;
@@ -127,7 +129,7 @@ JobackTable * read_joback(std::string filename) {
                                          cols[HEADERS[IN_CYCLE]] == TRUE,
                                          cols[HEADERS[BONDS]]);
         
-        (* joback_table)[fg] = contributions;
+        (* joback_table)[*fg] = contributions;
 
         //cout << *fg << endl;
       }
@@ -137,4 +139,50 @@ JobackTable * read_joback(std::string filename) {
   //cout << i << endl;  
 
   return joback_table;
+}
+
+Graph<FunctGroup> * read_graph(std::string filename){ 
+  ifstream file (filename);
+  Graph<FunctGroup>* graph= new Graph<FunctGroup>();
+  //make sure the file opened properly 
+  if (file.is_open()) {
+    cout << "file opened" << endl;
+  } else {
+    cout << "file not opened" << endl;
+    return NULL;
+  }
+  
+  //in the first pass...
+  std::string line;
+  for(int i = 0; std::getline(file, line); i++) {
+    //...extract the chemical names...
+    std::string group_name;
+    std::istringstream token_stream = istringstream(line);
+    std::getline(token_stream, group_name, ',');
+    
+    //...initialise the FunctGroups...
+    FunctGroup* fg = new FunctGroup(group_name);
+    
+    //...and add them to the Graph
+    graph->add_node(fg);
+  }
+ 
+  //reopen file (auf Deutsch) after it completes first pass
+  ifstream akte (filename);
+
+  //in the second pass...
+  for(int i = 0; std::getline(akte, line); i++) {
+    
+    //...for each of the bonds...
+    std::vector<std::string> bonds= split_by_col(line,',');
+    std::istringstream token_stream = istringstream(line);
+    for(int j =1; j<bonds.size();j++){
+      //...split the end indices from the weights...
+      std::vector<std::string> pair = split_by_col(bonds[j],'-');
+      
+      //...and add the corresponding edge
+      graph->add_edge(i,std::stoi(pair[0]), std::stod(pair[1])); 
+    }
+  }
+  return graph;
 }
